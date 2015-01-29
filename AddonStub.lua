@@ -100,15 +100,19 @@ local function getEventHandler(self, event, func, handler)
 			func = handler[func]
 		else
 			func = self[func]
+			handler = self
 		end
 	elseif type(func) ~= "function" then
 		func = self[event]
+		handler = self
+	else
+		handler = nil
 	end
-	return type(func) == "function" and func or nil
+	return type(func) == "function" and func or nil, handler
 end
 
 function addon:RegisterEvent(event, func, handler)
-	func = getEventHandler(self, event, func, handler)
+	func, handler = getEventHandler(self, event, func, handler)
 	if func then
 		handlers[event] = handlers[event] or {}
 		handlers[event][func] = handler or true
