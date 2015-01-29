@@ -84,17 +84,17 @@ end)
 function addon:TriggerEvent(event, ...)
 	if not handlers[event] then return end
 	for func, handler in pairs(handlers[event]) do
-		if handler then
-			if func(handler, ...) == "UNREGISTER" then
-				self:UnregisterEvent(event, func, handler)
+		if handler == true then
+			if func(...) == "UNREGISTER" then
+				self:UnregisterEvent(event, func)
 			end
-		elseif func(...) == "UNREGISTER" then
-			self:UnregisterEvent(event, func)
+		elseif func(handler, ...) == "UNREGISTER" then
+			self:UnregisterEvent(event, func, handler)
 		end
 	end
 end
 
-local function getEventHandler(event, func, handler)
+local function getEventHandler(self, event, func, handler)
 	if type(func) == "string" then
 		if type(handler) == "table" then
 			func = handler[func]
@@ -108,10 +108,10 @@ local function getEventHandler(event, func, handler)
 end
 
 function addon:RegisterEvent(event, func, handler)
-	func = getEventHandler(event, func, handler)
+	func = getEventHandler(self, event, func, handler)
 	if func then
 		handlers[event] = handlers[event] or {}
-		handlers[event][func] = handler or false
+		handlers[event][func] = handler or true
 		frame:RegisterEvent(event)
 		return true
 	end
@@ -119,7 +119,7 @@ end
 
 function addon:UnregisterEvent(event, func, handler)
 	if handlers[event] then
-		func = getEventHandler(event, func, handler)
+		func = getEventHandler(self, event, func, handler)
 		if func then
 			handlers[event][func] = nil
 		end
