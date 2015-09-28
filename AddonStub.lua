@@ -73,6 +73,7 @@ end
 -- Event handling
 
 local handlers = {}
+local unitEvents = {}
 
 frame:SetScript("OnEvent", function(self, event, ...)
 	if self[event] then
@@ -112,11 +113,24 @@ local function getEventHandler(self, event, func, handler)
 end
 
 function addon:RegisterEvent(event, func, handler)
+	assert(not unitEvents[event], event .. " already registered as a unit event!")
 	func, handler = getEventHandler(self, event, func, handler)
 	if func then
 		handlers[event] = handlers[event] or {}
 		handlers[event][func] = handler or true
 		frame:RegisterEvent(event)
+		return true
+	end
+end
+
+function addon:RegisterUnitEvent(event, unit1, unit2, func, handler)
+	assert(unitEvents[event] or not handlers[event], event .. " already registered as a non-unit event!")
+	func, handler = getEventHandler(self, event, func, handler)
+	if func then
+		unitEvents[event] = true
+		handlers[event] = handlers[event] or {}
+		handlers[event][func] = handler or true
+		frame:RegisterUnitEvent(event, unit1, unit2)
 		return true
 	end
 end
@@ -128,6 +142,7 @@ function addon:UnregisterEvent(event, func, handler)
 			handlers[event][func] = nil
 		end
 		if not next(handlers[event]) then
+			unitEvents[event] = nil -- TODO: check that this works as intended
 			handlers[event] = nil
 			frame:UnregisterEvent(event)
 		end
